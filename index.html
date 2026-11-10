@@ -19,6 +19,7 @@
 :root{
 --bg:#EAF1FF;--dots:rgba(20,33,61,.08);--surface:#FFFFFF;--surface2:#F1F5FF;--ink:#14213D;--ink2:#475B86;--line:#C9D5F2;--line2:#8FA3D1;--edge:#14213D;--cur:#14213D;
 --err:#C4162A;--err-bg:#FFE3E6;
+--okb:#E7EBF8;--bline:#14213D;--bink:#14213D;--bpt:#14213D;--bon:#EAF1FF;
 --hero:#F03A3A;--hero-d:#B81D24;--hero-t:#B81D24;--hero-l:#FBCBCB;--hero-m:#F7A3A3;--hero-ok:#FDE3E3;--on-hero:#FFFFFF;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -26,11 +27,13 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 :root:not([data-theme="light"]){
 --bg:#0B1330;--dots:rgba(255,255,255,.06);--surface:#1B2750;--surface2:#243366;--ink:#F2F6FF;--ink2:#AFC0EE;--line:#34467F;--line2:#6179C4;--edge:#050A1C;--cur:#FFD54F;
 --err:#FFB3BF;--err-bg:#5A2431;
+--okb:#2A3A72;--bline:#8FA3D1;--bink:#F2F6FF;--bpt:#F2F6FF;--bon:#0B1330;
 }
 }
 :root[data-theme="dark"]{
 --bg:#0B1330;--dots:rgba(255,255,255,.06);--surface:#1B2750;--surface2:#243366;--ink:#F2F6FF;--ink2:#AFC0EE;--line:#34467F;--line2:#6179C4;--edge:#050A1C;--cur:#FFD54F;
 --err:#FFB3BF;--err-bg:#5A2431;
+--okb:#2A3A72;--bline:#8FA3D1;--bink:#F2F6FF;--bpt:#F2F6FF;--bon:#0B1330;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 *{box-sizing:border-box}
@@ -163,6 +166,29 @@ svg.ring{display:block;width:100%;height:auto;overflow:visible}
 .note{font-size:13px;color:var(--ink2);margin:8px 0 0}
 .chk{display:flex;align-items:center;gap:10px;padding:8px 4px;font-size:16px}
 .chk input{width:24px;height:24px}
+
+.prow{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+.prow .pcard{margin:0;flex:1 1 280px}
+.bcard{background:var(--okb)}
+.bcard .ptotal b{color:var(--ink)}
+.bcard .pnext b{color:var(--ink)}
+.bcard .pbar{background:var(--surface)}
+.bcard .pbar i{background:repeating-linear-gradient(-45deg,var(--bpt) 0 9px,var(--bline) 9px 18px)}
+.bsec{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:18px 4px 10px;font-size:17px;font-weight:900}
+.bchip{font-size:13px;padding:3px 11px;border-radius:8px;background:var(--bpt);color:var(--bon);font-weight:900;letter-spacing:.04em}
+.task.bonus{border-style:dashed}
+.task.bonus.done{background:var(--okb);border-style:solid}
+.bpp{font-size:15px;font-weight:900;color:var(--bink);background:var(--okb);border:2px solid var(--bline);border-radius:10px;padding:4px 10px;white-space:nowrap;flex:none}
+.task.bonus.done .bpp{background:var(--bpt);color:var(--bon);border-color:var(--bpt)}
+.bkc.on{fill:var(--bpt);stroke:var(--edge)}
+.bkc.off{fill:none;stroke:var(--bline)}
+.bkp{fill:none;stroke:var(--bon);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.rw.brw.got{background:var(--okb)}
+.rw.brw .rs.g{background:var(--bpt);color:var(--bon)}
+.bsum{font-size:14px;color:var(--ink2);margin:0 4px 14px;font-weight:700}
+.ptotal small{white-space:nowrap}
+.pnext{min-width:0}
+.sinp{width:100%;margin:0 0 8px;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-size:14px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -180,9 +206,11 @@ svg.ring{display:block;width:100%;height:auto;overflow:visible}
 <div id="view">
 <div class="bubble" id="bubble" aria-live="polite"></div>
 <div class="hearts" id="hearts" aria-hidden="true"></div>
-<div class="pcard" id="pts"></div>
+<div class="prow" id="pts"></div>
 <div id="list"></div>
+<div id="bonus"></div>
 <div id="rewards"></div>
+<div id="brewards"></div>
 <p class="foot" id="foot"></p>
 </div>
 <div id="parent" style="display:none"></div>
@@ -195,15 +223,16 @@ svg.ring{display:block;width:100%;height:auto;overflow:visible}
 'use strict';
 var DN=['日','月','火','水','木','金','土'];
 var ORDER=[1,2,3,4,5,6,0];
-// 保存キーは「息子用の名前」＋「このページの場所(パス)」で分けます。同じiPadで別の予定アプリを開いても、記録が混ざりません。
+// 保存キーは「このアプリ固有の名前」＋「このページの場所(パス)」で分けます。同じiPadで別の予定アプリを開いても、記録が混ざりません。
+// ※ すでに使っている記録を引き継ぐため、このキー名は変えないでください。
 var NS=location.pathname.replace(/index\.html$/,'').replace(/\/?$/,'/');
 var KEY='kids-schedule-son-v1:'+NS,PKEY='kids-plans-son-v1:'+NS;
 var OLDKEY='kids-schedule-v2',OLDPKEY='kids-plans-cache-v1';
 // 旧バージョン（場所を区別しない保存キー）のデータを、この場所の保存キーへ一度だけ引き継ぎます。
-// 息子用は別のアプリなので false にしています（別アプリの旧データを持ち込まないため）。
+// このアプリは他のアプリとは別なので false にしています（別アプリの旧データを持ち込まないため）。
 var MIGRATE_LEGACY=false;
 var REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-var DEFAULT_PLANS={"version":1,"updatedAt":"2026-11-08","note":"仮のサンプルです。習い事とごほうびは、あとで本物に置き換えます。","weekly":{"0":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"あさごはん","icon":"🍞","start":"07:00","end":"08:00"},{"id":"free1","name":"じゆうじかん","icon":"🎈","start":"08:00","end":"09:00"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"09:00","end":"10:00"},{"id":"study","name":"じしゅう","icon":"📚","start":"10:00","end":"10:45"},{"id":"play","name":"あそぶ","icon":"🎮","start":"10:45","end":"12:00"},{"id":"lunch","name":"ひるごはん","icon":"🍝","start":"12:00","end":"13:00"},{"id":"outing","name":"おでかけ・じゆう","icon":"🚲","start":"13:00","end":"17:00"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"18:00","end":"19:00"},{"id":"bath","name":"おふろ","icon":"🛁","start":"19:00","end":"19:45"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]},"1":{"range":["15:00","21:00"],"tasks":[{"id":"snack","name":"おやつ","icon":"🍪","start":"15:00","end":"15:30"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"15:30","end":"16:15"},{"id":"study","name":"じしゅう","icon":"📚","start":"16:15","end":"16:45"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"16:45","end":"17:30"},{"id":"bath","name":"おふろ","icon":"🛁","start":"17:30","end":"18:15"},{"id":"play","name":"あそぶ","icon":"🎮","start":"18:15","end":"20:00"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]},"2":{"range":["15:00","21:00"],"tasks":[{"id":"snack","name":"おやつ","icon":"🍪","start":"15:00","end":"15:30"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"15:30","end":"16:15"},{"id":"study","name":"じしゅう","icon":"📚","start":"16:15","end":"16:45"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"16:45","end":"17:30"},{"id":"bath","name":"おふろ","icon":"🛁","start":"17:30","end":"18:15"},{"id":"play","name":"あそぶ","icon":"🎮","start":"18:15","end":"20:00"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]},"3":{"range":["15:00","21:00"],"tasks":[{"id":"snack","name":"おやつ","icon":"🍪","start":"15:00","end":"15:30"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"15:30","end":"16:15"},{"id":"study","name":"じしゅう","icon":"📚","start":"16:15","end":"16:45"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"16:45","end":"17:30"},{"id":"bath","name":"おふろ","icon":"🛁","start":"17:30","end":"18:15"},{"id":"play","name":"あそぶ","icon":"🎮","start":"18:15","end":"20:00"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]},"4":{"range":["15:00","21:00"],"tasks":[{"id":"snack","name":"おやつ","icon":"🍪","start":"15:00","end":"15:30"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"15:30","end":"16:15"},{"id":"study","name":"じしゅう","icon":"📚","start":"16:15","end":"16:45"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"16:45","end":"17:30"},{"id":"bath","name":"おふろ","icon":"🛁","start":"17:30","end":"18:15"},{"id":"play","name":"あそぶ","icon":"🎮","start":"18:15","end":"20:00"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]},"5":{"range":["15:00","21:00"],"tasks":[{"id":"snack","name":"おやつ","icon":"🍪","start":"15:00","end":"15:30"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"15:30","end":"16:15"},{"id":"study","name":"じしゅう","icon":"📚","start":"16:15","end":"16:45"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"16:45","end":"17:30"},{"id":"bath","name":"おふろ","icon":"🛁","start":"17:30","end":"18:15"},{"id":"play","name":"あそぶ","icon":"🎮","start":"18:15","end":"20:00"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]},"6":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"あさごはん","icon":"🍞","start":"07:00","end":"08:00"},{"id":"free1","name":"じゆうじかん","icon":"🎈","start":"08:00","end":"09:00"},{"id":"homework","name":"しゅくだい","icon":"📝","start":"09:00","end":"10:00"},{"id":"study","name":"じしゅう","icon":"📚","start":"10:00","end":"10:45"},{"id":"play","name":"あそぶ","icon":"🎮","start":"10:45","end":"12:00"},{"id":"lunch","name":"ひるごはん","icon":"🍝","start":"12:00","end":"13:00"},{"id":"outing","name":"おでかけ・じゆう","icon":"🚲","start":"13:00","end":"17:00"},{"id":"dinner","name":"ゆうごはん","icon":"🍚","start":"18:00","end":"19:00"},{"id":"bath","name":"おふろ","icon":"🛁","start":"19:00","end":"19:45"},{"id":"bed","name":"ねるじゅんび","icon":"🌙","start":"20:00","end":"21:00"}]}},"overrides":{},"rewards":[{"id":"r1","pts":5,"name":"すきな おやつ","icon":"🍦"},{"id":"r2","pts":10,"name":"おでかけ","icon":"🎡"},{"id":"r3","pts":20,"name":"ほしい おもちゃ","icon":"🤖"}]};
+var DEFAULT_PLANS={"version":2,"updatedAt":"2026-11-08","weekly":{"0":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"soccer","name":"サッカー","icon":"⚽","start":"08:30","end":"12:30"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"12:30","end":"20:30"}]},"1":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"study","name":"こくご２枚・さんすう２枚・えいご","icon":"✏️","start":"07:40","end":"08:20"},{"id":"bath","name":"おふろ","icon":"🛁","start":"18:00","end":"18:45"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"18:45","end":"20:30"}]},"2":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"study","name":"こくご２枚・さんすう２枚・えいご","icon":"✏️","start":"07:40","end":"08:20"},{"id":"bath","name":"おふろ","icon":"🛁","start":"18:00","end":"18:45"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"18:45","end":"20:30"}]},"3":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"study","name":"こくご２枚・さんすう２枚・えいご","icon":"✏️","start":"07:40","end":"08:20"},{"id":"bath","name":"おふろ","icon":"🛁","start":"18:15","end":"18:30"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"18:30","end":"20:30"}]},"4":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"study","name":"こくご２枚・さんすう２枚・えいご","icon":"✏️","start":"07:40","end":"08:20"},{"id":"bath","name":"おふろ","icon":"🛁","start":"18:15","end":"18:30"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"18:30","end":"20:30"}]},"5":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"study","name":"こくご２枚・さんすう２枚・えいご","icon":"✏️","start":"07:40","end":"08:20"},{"id":"soccer","name":"サッカー","icon":"⚽","start":"16:00","end":"17:00"},{"id":"bath","name":"おふろ","icon":"🛁","start":"18:00","end":"18:45"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"18:45","end":"20:30"}]},"6":{"range":["07:00","21:00"],"tasks":[{"id":"breakfast","name":"朝ごはん","icon":"🍞","start":"07:00","end":"07:40"},{"id":"soccer","name":"サッカー","icon":"⚽","start":"08:30","end":"12:30"},{"id":"bed","name":"どくしょ・ねる","icon":"📖","start":"12:30","end":"20:30"}]}},"overrides":{},"bonusDaily":[{"id":"b-extra","name":"ついかのべんきょう","icon":"📚","pts":1},{"id":"b-help","name":"おてつだいできた","icon":"🧹","pts":1},{"id":"b-meal","name":"ごはんをきちんとただしくたべれた","icon":"🍚","pts":1},{"id":"b-nofight","name":"けんかしなかった","icon":"🤝","pts":1}],"bonus":{},"rewards":[{"id":"r1","pts":7,"name":"すきなおやつ","icon":"🍦"},{"id":"r2","pts":21,"name":"500円未満のおもちゃ","icon":"🤖"}],"bonusRewards":[{"id":"br1","pts":10,"name":"10えん","icon":"💴"},{"id":"br2","pts":30,"name":"50えん","icon":"💴"}],"bonusRewardsRepeat":false};
 
 function pad(n){return String(n).padStart(2,'0');}
 function fmt(m){return Math.floor(m/60)+':'+pad(Math.round(m%60));}
@@ -221,8 +250,20 @@ if(!o.pts.log||typeof o.pts.log!=='object')o.pts.log={};
 if(typeof o.pts.adj!=='number')o.pts.adj=0;
 if(!o.claimed||typeof o.claimed!=='object')o.claimed={};
 o.mute=!!o.mute;
+if(!Array.isArray(o.out))o.out=[];
+if(typeof o.cursor!=='number')o.cursor=0;
+if(!o.tm||typeof o.tm!=='object')o.tm={};
+if(!o.adjE||typeof o.adjE!=='object')o.adjE={};
+if(!o.dev||typeof o.dev!=='string')o.dev='d'+Math.random().toString(36).slice(2,8);
+if(!o.sync||typeof o.sync!=='object')o.sync={};
+if(!o.bdone||typeof o.bdone!=='object')o.bdone={};
+if(typeof o.badj!=='number')o.badj=0;
+if(!o.badjE||typeof o.badjE!=='object')o.badjE={};
+if(!o.bclaimed||typeof o.bclaimed!=='object')o.bclaimed={};
 var cut=new Date();cut.setDate(cut.getDate()-150);var cs=iso(cut);
 Object.keys(o.done).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&k<cs)delete o.done[k];});
+Object.keys(o.bdone).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&k<cs)delete o.bdone[k];});
+Object.keys(o.tm).forEach(function(k){var q=k.split('|')[1];if(/^\d{4}-\d{2}-\d{2}$/.test(q||'')&&q<cs)delete o.tm[k];});
 return o;
 }
 function migrateLegacy(){
@@ -240,7 +281,7 @@ var S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
 function parsePlans(o){
-var errs=[],out={version:0,updatedAt:'',weekly:{},overrides:{},rewards:[]};
+var errs=[],out={version:0,updatedAt:'',weekly:{},overrides:{},rewards:[],bonus:{},bonusDaily:[],bonusRewards:[],bonusRewardsRepeat:false};
 if(!o||typeof o!=='object'||Array.isArray(o))return {errs:['ファイルの形式が正しくありません']};
 out.version=o.version||0;out.updatedAt=o.updatedAt?String(o.updatedAt):'';
 function day(entry,label,dow){
@@ -255,7 +296,7 @@ if(seen[id]){errs.push(label+'：id「'+id+'」が重複しています');return
 seen[id]=1;
 if(isNaN(s)||isNaN(e)||e<=s){errs.push(label+'「'+nm+'」：start/end が正しくありません');return;}
 if(s<r[0]||e>r[1]){errs.push(label+'「'+nm+'」：range の外にあります');return;}
-tasks.push({id:id,name:String(nm),icon:String(t.icon||'⭐'),s:s,e:e});
+tasks.push({id:id,name:String(nm),icon:String(t.icon||'⭐'),memo:t.memo?String(t.memo):'',s:s,e:e});
 });
 tasks.sort(function(a,b){return a.s-b.s;});
 for(var i=1;i<tasks.length;i++){if(tasks[i].s<tasks[i-1].e)errs.push(label+'：「'+tasks[i-1].name+'」と「'+tasks[i].name+'」が重なっています');}
@@ -282,6 +323,44 @@ if(rs[id]){errs.push('rewards：id「'+id+'」が重複しています');return;
 rs[id]=1;
 if(typeof p!=='number'||p<1||p>999||Math.floor(p)!==p){errs.push('rewards「'+r.name+'」：pts は 1〜999 の整数です');return;}
 out.rewards.push({id:id,pts:p,name:String(r.name),icon:String(r.icon||'🎁')});
+});
+}
+function bonusItems(arr,label){
+var seen={},list=[];
+arr.forEach(function(b,i){
+var id=String(b&&b.id!=null?b.id:''),p=(b&&b.pts!==undefined)?b.pts:1;
+if(!id||!b||!b.name){errs.push(label+'：'+(i+1)+'件目に id と name が必要です');return;}
+if(seen[id]){errs.push(label+'：id「'+id+'」が重複しています');return;}
+seen[id]=1;
+if(typeof p!=='number'||p<1||p>99||Math.floor(p)!==p){errs.push(label+'「'+b.name+'」：pts は 1〜99 の整数です');return;}
+list.push({id:id,name:String(b.name),icon:String(b.icon||'✨'),memo:b.memo?String(b.memo):'',pts:p});
+});
+return list;
+}
+if(o.bonusDaily!==undefined){
+if(Array.isArray(o.bonusDaily)){out.bonusDaily=bonusItems(o.bonusDaily,'bonusDaily');}else{errs.push('bonusDaily：配列で書いてください');}
+}
+if(o.bonus&&typeof o.bonus==='object'){
+Object.keys(o.bonus).forEach(function(k){
+if(!/^\d{4}-\d{2}-\d{2}$/.test(k)){errs.push('bonus の日付「'+k+'」は YYYY-MM-DD で書いてください');return;}
+var arr=o.bonus[k];if(!Array.isArray(arr)){errs.push('bonus '+k+'：配列で書いてください');return;}
+var list=bonusItems(arr,'bonus '+k),dup={};
+out.bonusDaily.forEach(function(b){dup[b.id]=1;});
+list.forEach(function(b){if(dup[b.id])errs.push('bonus '+k+'：id「'+b.id+'」が bonusDaily と重複しています');});
+out.bonus[k]=list;
+});
+}
+out.bonusRewardsRepeat=!!o.bonusRewardsRepeat;
+if(Array.isArray(o.bonusRewards)){
+var brs={};
+o.bonusRewards.forEach(function(r,i){
+var id=String(r&&r.id!=null?r.id:''),p=r&&r.pts;
+if(!id||!r.name){errs.push('bonusRewards '+(i+1)+'件目：id と name が必要です');return;}
+if(id.indexOf('#')>=0){errs.push('bonusRewards：id に # は使えません');return;}
+if(brs[id]){errs.push('bonusRewards：id「'+id+'」が重複しています');return;}
+brs[id]=1;
+if(typeof p!=='number'||p<1||p>999||Math.floor(p)!==p){errs.push('bonusRewards「'+r.name+'」：pts は 1〜999 の整数です');return;}
+out.bonusRewards.push({id:id,pts:p,name:String(r.name),icon:String(r.icon||'🎁')});
 });
 }
 return {plans:out,errs:errs};
@@ -417,7 +496,7 @@ $('ring').innerHTML=h;
 }
 function renderStatus(){
 var d=view,st=stats(),P=st.P,nm=nowMin(),isT=d===todayIdx(),h='';
-if(!P.length){h='まだ よていが ないよ<small>おうちの ひとに へんしゅうして もらってね</small>';}
+if(!P.length){h='まだ よていが ないよ<small>おうちの ひとに きいてね</small>';}
 else if(!isT){var dd=dateOf(d),past=weekDate(d)<iso(new Date());h=(dd.getMonth()+1)+'/'+dd.getDate()+' ('+DN[d]+') の よてい<small>'+(past?'すんだ ひ： '+st.n+' / '+P.length+' できたよ':'ぜんぶで '+P.length+'こ あるよ')+'</small>';}
 else{
 var cur=null,next=null,i;
@@ -425,7 +504,7 @@ for(i=0;i<P.length;i++){if(nm>=P[i].s&&nm<P[i].e){cur=P[i];break;}}
 for(i=0;i<P.length;i++){if(P[i].s>nm){next=P[i];break;}}
 if(cur){
 var left=Math.max(1,Math.ceil(cur.e-nm));
-h=isDone(d,cur.id)?'「'+esc(cur.name)+'」は できたよ！'+'<small>えらい！ つぎも がんばろうね</small>':'いまは「'+esc(cur.name)+'」のじかん '+esc(cur.icon)+'<small>あと '+left+' ふん</small>';
+h=isDone(d,cur.id)?'「'+esc(cur.name)+'」は できたよ！'+'<small>えらい！ つぎも がんばろうね</small>':'いまは「'+esc(cur.name)+'」のじかん '+esc(cur.icon)+'<small>あと '+left+' ふん'+(cur.memo?'<br>'+esc(cur.memo):'')+'</small>';
 }else if(next){
 var w=Math.ceil(next.s-nm);
 h='つぎは「'+esc(next.name)+'」 '+esc(next.icon)+'<small>'+fmt(next.s)+' から（あと '+w+' ふん）</small>';
@@ -440,10 +519,10 @@ $('hearts').innerHTML=h;
 }
 function renderList(){
 var st=stats(),P=st.P,nm=nowMin(),isT=view===todayIdx(),h='';
-if(!P.length)h='<div class="empty">よていが ないよ。<br>ギアを ながおしして ふやしてね。</div>';
+if(!P.length)h='<div class="empty">きょうは よていが ないよ。<br>おうちの ひとに きいてね。</div>';
 for(var i=0;i<P.length;i++){
 var t=P[i],dn=isDone(view,t.id),cur=isT&&nm>=t.s&&nm<t.e;
-h+='<button class="task'+(dn?' done':'')+(cur?' cur':'')+'" data-id="'+t.id+'" aria-pressed="'+dn+'"><span class="ic">'+esc(t.icon)+'</span><span class="nm">'+esc(t.name)+'<span class="tm">'+fmt(t.s)+' - '+fmt(t.e)+'</span></span><svg class="ck" viewBox="0 0 48 48">'+bolt(24,24,1.7,dn?'on':'off')+'</svg></button>';
+h+='<button class="task'+(dn?' done':'')+(cur?' cur':'')+'" data-id="'+t.id+'" aria-pressed="'+dn+'"><span class="ic">'+esc(t.icon)+'</span><span class="nm">'+esc(t.name)+'<span class="tm">'+fmt(t.s)+' - '+fmt(t.e)+'</span>'+(t.memo?'<span class="tm" style="color:var(--ink)">'+esc(t.memo)+'</span>':'')+'</span><svg class="ck" viewBox="0 0 48 48">'+bolt(24,24,1.7,dn?'on':'off')+'</svg></button>';
 }
 $('list').innerHTML=h;
 }
@@ -459,16 +538,6 @@ $('mute').textContent=S.mute?'🔕':'🔔';
 }
 function total(){var n=0,k;for(k in S.pts.log){if(S.pts.log[k])n++;}return Math.max(0,n+(S.pts.adj||0));}
 function sortedRew(){return PL.rewards.slice().sort(function(a,b){return a.pts-b.pts;});}
-function renderPoints(){
-var t=total(),R=sortedRew(),prev=0,next=null,i;
-for(i=0;i<R.length;i++){if(R[i].pts>t){next=R[i];break;}prev=R[i].pts;}
-var pc=next?Math.round((t-prev)/(next.pts-prev)*100):100;
-var h='<div class="ptop"><div class="ptotal"><span class="pst">⭐</span><b>'+t+'</b><small>ポイント</small></div><div class="pnext">'+(next?'あと '+(next.pts-t)+' ポイントで<br><b>'+esc(next.icon)+' '+esc(next.name)+'</b>':(R.length?'ぜんぶの ごほうびを<br>ゲットしたよ！':'ごほうびは おうちの ひとと<br>きめようね'))+'</div></div>';
-h+='<div class="pbar"><i style="width:'+pc+'%"></i></div><div class="stamps">';
-for(i=0;i<7;i++){var d=ORDER[i],ea=!!S.pts.log[weekDate(d)];h+='<span class="stp'+(ea?' on':'')+(d===view?' cur':'')+'">'+(ea?'⭐':DN[d])+'</span>';}
-h+='</div>';
-$('pts').innerHTML=h;
-}
 function renderRewards(){
 var R=sortedRew(),t=total(),h='';
 if(!R.length){$('rewards').innerHTML='';return;}
@@ -485,13 +554,14 @@ function renderFoot(){
 var s='よてい '+(PL.updatedAt||'-');
 if(plSource!=='online')s+='（'+(plSource==='cache'?'ほぞんデータ':'サンプル')+'）';
 if(plErr.length)s+=' ⚠ よてい ファイルに エラー';
+if(cfgOk())s+=(syncErr?' ☁⚠':' ☁');
 $('foot').textContent=s;
 }
 function renderAll(){
 applyHero(view);renderHeader();renderTabs();renderRing();
 $('view').style.display=parent?'none':'block';
 $('parent').style.display=parent?'block':'none';
-if(parent){renderParent();}else{renderStatus();renderHearts();renderPoints();renderList();renderRewards();renderFoot();}
+if(parent){renderParent();}else{renderStatus();renderHearts();renderPoints();renderList();renderBonus();renderRewards();renderBonusRewards();renderFoot();}
 }
 function hmNow(t){if(!t)return '-';var d=new Date(t);return d.getMonth()+1+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes());}
 function renderParent(){
@@ -501,8 +571,10 @@ var h='<div class="panel"><h2>おうちの方へ</h2><p>保護者向けの画面
 h+='<div class="sub" style="margin:0 0 6px">予定ファイル（plans.json）</div><dl class="kv"><dt>状態</dt><dd>'+esc(src)+'</dd><dt>版</dt><dd>'+esc(PL.updatedAt||'-')+'（version '+esc(PL.version||'-')+'）</dd><dt>最後に取得</dt><dd>'+esc(hmNow(lastOk))+(netFail?'（通信できませんでした）':'')+'</dd><dt>保存先</dt><dd>'+esc(NS)+'</dd></dl>';
 if(plErr.length){h+='<div class="errs on">plans.json にエラーがあるため、前の予定を使っています：<br>'+plErr.slice(0,6).map(esc).join('<br>')+'</div>';}
 h+='<div class="btns" style="margin:0 0 14px"><button class="btn sec" data-act="refresh">いま更新する</button></div>';
+h+=syncHtml();
 h+='<div class="sub" style="margin:0 0 6px">ポイント：<b id="ptv">'+t+'</b></div><div class="btns" style="margin:0 0 6px"><button class="btn sec" data-act="padj" data-v="-1">− 1</button><button class="btn sec" data-act="padj" data-v="1">＋ 1</button><button class="btn sec" data-act="preset">'+(pArm?'本当に 0 に戻す？':'0 に戻す')+'</button></div>';
 if(R.length){h+='<div class="sub">ごほうびを渡したら チェック</div>';R.forEach(function(r){h+='<label class="chk"><input type="checkbox" data-claim="'+esc(r.id)+'"'+(S.claimed[r.id]?' checked':'')+'><span>'+esc(r.icon)+' '+esc(r.name)+'（'+r.pts+'ポイント）</span></label>';});}
+h+=bonusParentHtml();
 h+='<div class="sub">バックアップ</div><p class="note">ポイントと達成記録はこの端末の中にだけあります。ときどき「書き出す」でコピーして、メモなどに保存してください。「読み込む」で復元できます。</p><textarea id="bk" aria-label="バックアップ">'+esc(backupText)+'</textarea><div class="btns"><button class="btn sec" data-act="bkout">書き出す</button><button class="btn sec" data-act="bkcopy">コピー</button><button class="btn sec" data-act="bkin">読み込む</button></div>';
 h+='<div class="btns"><button class="btn" data-act="close">閉じる</button></div></div>';
 $('parent').innerHTML=h;
@@ -526,21 +598,22 @@ gear.addEventListener('pointerleave',gUp);
 gear.addEventListener('pointercancel',gUp);
 gear.addEventListener('contextmenu',function(e){e.preventDefault();});
 gear.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleParent();}});
-function exportData(){return JSON.stringify({app:'kids-schedule-son',v:2,exportedAt:new Date().toISOString(),pts:S.pts,claimed:S.claimed,done:S.done,mute:S.mute});}
+function exportData(){return JSON.stringify({app:'kids-schedule-son',v:2,exportedAt:new Date().toISOString(),pts:S.pts,claimed:S.claimed,done:S.done,adjE:S.adjE,tm:S.tm,bdone:S.bdone,badj:S.badj,badjE:S.badjE,bclaimed:S.bclaimed,mute:S.mute});}
 $('parent').addEventListener('change',function(e){
 var c=e.target.getAttribute&&e.target.getAttribute('data-claim');
-if(c){if(e.target.checked){S.claimed[c]=true;}else{delete S.claimed[c];}save();}
+if(c){var on=!!e.target.checked;if(on){S.claimed[c]=true;}else{delete S.claimed[c];}emit('claim','',c,on?1:0,rewardName(c));}
 });
-$('parent').addEventListener('input',function(e){if(e.target.id==='bk')backupText=e.target.value;});
+$('parent').addEventListener('input',function(e){if(e.target.id==='bk')backupText=e.target.value;if(e.target.id==='sy-u')syDraft.u=e.target.value;if(e.target.id==='sy-k')syDraft.k=e.target.value;});
 $('parent').addEventListener('click',function(e){
 var b=e.target.closest('[data-act]');if(!b)return;
 var act=b.getAttribute('data-act');
 if(act==='close'){parent=false;pArm=false;renderAll();return;}
+if(syncAct(act)||bonusAct(act,b))return;
 if(act==='refresh'){refresh(true);return;}
-if(act==='padj'){var v=parseInt(b.getAttribute('data-v'),10);if(total()+v<0)return;S.pts.adj=(S.pts.adj||0)+v;save();var el=$('ptv');if(el)el.textContent=total();return;}
+if(act==='padj'){var v=parseInt(b.getAttribute('data-v'),10);if(total()+v<0)return;addAdj(v,'手動補正');var el=$('ptv');if(el)el.textContent=total();return;}
 if(act==='preset'){
 if(!pArm){pArm=true;renderParent();setTimeout(function(){if(pArm&&parent){pArm=false;renderParent();}},3500);return;}
-pArm=false;S.pts={log:{},adj:0};save();renderParent();toast('ポイントを 0 に戻しました');return;
+pArm=false;var cur0=total();if(cur0>0)addAdj(-cur0,'0に戻す');renderParent();toast('ポイントを 0 に戻しました');return;
 }
 if(act==='bkout'){backupText=exportData();renderParent();return;}
 if(act==='bkcopy'){
@@ -554,10 +627,275 @@ if(act==='bkin'){
 var raw=($('bk').value||'').trim(),o=null;
 try{o=JSON.parse(raw);}catch(x){}
 if(!o||o.app!=='kids-schedule-son'||!o.pts){toast('バックアップの形式が正しくありません');return;}
-S.pts=o.pts;S.claimed=o.claimed||{};S.done=o.done||{};if(typeof o.mute==='boolean')S.mute=o.mute;
+S.pts=o.pts;S.claimed=o.claimed||{};S.done=o.done||{};S.adjE=o.adjE||{};S.tm=o.tm||{};S.bdone=o.bdone||{};S.badj=typeof o.badj==='number'?o.badj:0;S.badjE=o.badjE||{};S.bclaimed=o.bclaimed||{};if(typeof o.mute==='boolean')S.mute=o.mute;
 S=normS(S);save();backupText='';renderAll();toast('読み込みました');return;
 }
 });
+
+// ---------- スプレッドシート同期（先に端末へ保存 → あとから送受信） ----------
+var syncing=false,syncT=null,syncErr='',lastSync=0,lastSyncTry=0,syTestMsg='',syDraft={u:null,k:null};
+function cfgOk(){return !!(S.sync&&S.sync.u&&S.sync.k);}
+function newId(){return S.dev+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
+function devLabel(){var st=(window.navigator&&window.navigator.standalone===true)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);return st?'ホーム画面':'Safari';}
+function nameFor(date,id){
+var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date||'');if(!m)return '';
+var dow=new Date(parseInt(m[1],10),parseInt(m[2],10)-1,parseInt(m[3],10)).getDay();
+var e=PL.overrides[date]||PL.weekly[dow];if(!e)return '';
+for(var i=0;i<e.tasks.length;i++){if(e.tasks[i].id===id)return e.tasks[i].name;}
+return '';
+}
+function rewardName(id){for(var i=0;i<PL.rewards.length;i++){if(PL.rewards[i].id===id)return PL.rewards[i].name;}return '';}
+function mkey(e){return e.k+'|'+e.d+'|'+e.key;}
+function emit(k,date,key,v,name){
+var t=Date.now(),e={id:newId(),t:t,dev:devLabel(),k:k,d:date||'',key:key||'',n:name||'',v:v};
+S.tm[mkey(e)]=t;
+S.out.push(e);if(S.out.length>3000)S.out.splice(0,S.out.length-3000);
+save();scheduleSync();
+}
+function addAdj(v,note){
+var e={id:newId(),t:Date.now(),dev:devLabel(),k:'adj',d:'',key:'',n:note||'',v:v};
+S.adjE[e.id]=v;S.pts.adj=(S.pts.adj||0)+v;
+S.out.push(e);save();scheduleSync();
+}
+function applyEvent(e){
+if(!e||typeof e.id!=='string'||typeof e.k!=='string')return false;
+var v=Number(e.v);
+if(e.k==='adj'){if(S.adjE[e.id]!==undefined)return false;S.adjE[e.id]=v;S.pts.adj=(S.pts.adj||0)+v;return true;}
+if(e.k==='badj'){if(S.badjE[e.id]!==undefined)return false;S.badjE[e.id]=v;S.badj=(S.badj||0)+v;return true;}
+var key=mkey(e),t=Number(e.t)||0;
+if(S.tm[key]!==undefined&&S.tm[key]>t)return false;
+S.tm[key]=t;
+if(e.k==='done'){
+var a=S.done[e.d]||(S.done[e.d]=[]),i=a.indexOf(e.key);
+if(v){if(i<0){a.push(e.key);return true;}}else if(i>=0){a.splice(i,1);return true;}
+return false;
+}
+if(e.k==='award'){var had=!!S.pts.log[e.d];if(v){S.pts.log[e.d]=1;}else{delete S.pts.log[e.d];}return had!==!!v;}
+if(e.k==='claim'){var h2=!!S.claimed[e.key];if(v){S.claimed[e.key]=true;}else{delete S.claimed[e.key];}return h2!==!!v;}
+if(e.k==='bclaim'){var h4=!!S.bclaimed[e.key];if(v){S.bclaimed[e.key]=true;}else{delete S.bclaimed[e.key];}return h4!==!!v;}
+if(e.k==='bonus'){var bo=S.bdone[e.d]||(S.bdone[e.d]={}),was=bo[e.key]>0?bo[e.key]:0,now2=v>0?v:0;if(now2){bo[e.key]=now2;}else{delete bo[e.key];}return was!==now2;}
+return false;
+}
+function scheduleSync(){if(!cfgOk())return;clearTimeout(syncT);syncT=setTimeout(function(){sync(false);},1200);}
+function qs(o){var a=[];for(var k in o){if(Object.prototype.hasOwnProperty.call(o,k))a.push(encodeURIComponent(k)+'='+encodeURIComponent(o[k]));}return a.join('&');}
+function parseRes(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+function errText(m){return m==='auth'?'合言葉が違います':(m||'エラー');}
+function friendlyErr(err){var m=(err&&err.message)||'エラー';if(/failed to fetch|load failed|networkerror|network request failed/i.test(m))return '通信できません（つながったら自動で再送します）';return m;}
+function api(params,body){
+var u=S.sync.u;
+if(body){return fetch(u,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).then(parseRes);}
+return fetch(u+(u.indexOf('?')<0?'?':'&')+qs(params),{redirect:'follow'}).then(parseRes);
+}
+function pushOut(){
+if(!S.out.length)return Promise.resolve();
+var batch=S.out.slice(0,100),k=S.sync.k;
+return api(null,{token:k,action:'push',events:batch}).catch(function(err){
+var data=JSON.stringify(batch);
+if(encodeURIComponent(data).length>1800)throw err;
+return api({token:k,action:'push',data:data});
+}).then(function(r){
+if(!r||!r.ok)throw new Error(errText(r&&r.error));
+S.out.splice(0,batch.length);save();return pushOut();
+});
+}
+function pullAll(){
+var changed=false;
+function step(){
+return api({token:S.sync.k,action:'pull',since:S.cursor}).then(function(r){
+if(!r||!r.ok)throw new Error(errText(r&&r.error));
+(r.events||[]).forEach(function(e){if(applyEvent(e))changed=true;});
+S.cursor=r.seq;save();
+if(r.more)return step();
+});
+}
+return step().then(function(){return changed;});
+}
+function sync(manual){
+if(!cfgOk()){if(manual)toast('同期の設定がありません');return Promise.resolve();}
+if(syncing)return Promise.resolve();
+syncing=true;syncErr='';lastSyncTry=Date.now();
+return pushOut().then(pullAll).then(function(changed){
+syncing=false;lastSync=Date.now();
+if(changed||manual||parent){renderAll();}else{renderFoot();}
+if(manual)toast('同期しました');
+}).catch(function(err){
+syncing=false;syncErr=friendlyErr(err);
+if(manual)toast('同期に失敗しました：'+syncErr);
+if(parent){renderParent();}else{renderFoot();}
+});
+}
+function hm2(t){var d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes());}
+function syncStatus(){
+if(!cfgOk())return '未設定';
+var s=syncing?'同期中…':(syncErr?'エラー：'+syncErr:(lastSync?'同期済み（'+hm2(lastSync)+'）':'まだ同期していません'));
+if(S.out.length)s+='・送信待ち '+S.out.length+'件';
+return s;
+}
+function syncTest(){
+if(!cfgOk()){toast('先に「保存してつなぐ」を押してください');return Promise.resolve();}
+var res=[],k=S.sync.k;
+syTestMsg='テスト中…';if(parent)renderParent();
+return api({token:k,action:'ping'}).then(function(r){res.push('読み取り(GET)：'+(r&&r.ok?'OK（記録 '+r.seq+'件）':'NG '+errText(r&&r.error)));},function(e){res.push('読み取り(GET)：NG '+friendlyErr(e));})
+.then(function(){return api(null,{token:k,action:'ping'});}).then(function(r){res.push('書き込み(POST)：'+(r&&r.ok?'OK':'NG '+errText(r&&r.error)));},function(e){res.push('書き込み(POST)：NG '+friendlyErr(e));})
+.then(function(){syTestMsg=res.join(' ／ ');if(parent)renderParent();});
+}
+function uploadAll(){
+var n=0;
+Object.keys(S.done).forEach(function(date){(S.done[date]||[]).forEach(function(id){emit('done',date,id,1,nameFor(date,id));n++;});});
+Object.keys(S.pts.log).forEach(function(date){if(S.pts.log[date]){emit('award',date,'',1,'');n++;}});
+Object.keys(S.claimed).forEach(function(rid){if(S.claimed[rid]){emit('claim','',rid,1,rewardName(rid));n++;}});
+var sum=0;Object.keys(S.adjE).forEach(function(k){sum+=S.adjE[k];});
+var legacy=(S.pts.adj||0)-sum;
+Object.keys(S.bdone).forEach(function(date){var o=S.bdone[date]||{};Object.keys(o).forEach(function(id){if(o[id]>0){emit('bonus',date,id,o[id],bonusNameFor(date,id));n++;}});});
+Object.keys(S.bclaimed).forEach(function(rid){if(S.bclaimed[rid]){emit('bclaim','',rid,1,bRewardName(rid));n++;}});
+var bsum=0;Object.keys(S.badjE).forEach(function(k){bsum+=S.badjE[k];});
+var blegacy=(S.badj||0)-bsum;
+if(blegacy!==0){var bev={id:newId(),t:Date.now(),dev:devLabel(),k:'badj',d:'',key:'',n:'この端末のボーナス補正分（移行）',v:blegacy};S.badjE[bev.id]=blegacy;S.out.push(bev);n++;}
+if(legacy!==0){var ev={id:newId(),t:Date.now(),dev:devLabel(),k:'adj',d:'',key:'',n:'この端末の補正分（移行）',v:legacy};S.adjE[ev.id]=legacy;S.out.push(ev);n++;}
+save();
+return n;
+}
+function syncHtml(){
+var u=syDraft.u!==null?syDraft.u:(S.sync.u||''),k=syDraft.k!==null?syDraft.k:(S.sync.k||'');
+var h='<div class="sub" style="margin:0 0 6px">スプレッドシートと同期</div>';
+h+='<dl class="kv"><dt>状態</dt><dd>'+esc(syncStatus())+'</dd><dt>この開き方</dt><dd>'+esc(devLabel())+'</dd></dl>';
+h+='<p class="note" style="margin:0 0 8px">Safari とホーム画面アイコンは保存先が別なので、使う開き方ごとに、同じ URL と合言葉を 1 回ずつ入れます。</p>';
+h+='<input type="text" class="sinp" id="sy-u" placeholder="ウェブアプリの URL（https://script.google.com/…/exec）" value="'+esc(u)+'" autocomplete="off" autocapitalize="off" spellcheck="false">';
+h+='<input type="text" class="sinp" id="sy-k" placeholder="合言葉（Code.gs の TOKEN と同じもの）" value="'+esc(k)+'" autocomplete="off" autocapitalize="off" spellcheck="false">';
+h+='<div class="btns" style="margin:0 0 8px"><button class="btn sec" data-act="sysave">保存してつなぐ</button><button class="btn sec" data-act="sytest">接続テスト</button><button class="btn sec" data-act="synow">いま同期</button></div>';
+if(syTestMsg)h+='<p class="note">'+esc(syTestMsg)+'</p>';
+h+='<div class="btns" style="margin:0 0 14px"><button class="btn sec" data-act="syup">この端末の記録をアップロード（初回）</button><button class="btn sec" data-act="sycode">設定コードをコピー</button><button class="btn sec" data-act="syclear">設定を消す</button></div>';
+return h;
+}
+function syncAct(act){
+if(act==='sysave'){
+var u=((syDraft.u!==null?syDraft.u:S.sync.u)||'').trim(),k=((syDraft.k!==null?syDraft.k:S.sync.k)||'').trim();
+if(u.indexOf('#')>=0){var pp=u.split('#');u=pp[0].trim();k=pp.slice(1).join('#').trim();}
+if(!/^https:\/\/script\.google\.com\/(a\/macros\/[\w.-]+|macros)\/s\/[\w-]+\/exec$/.test(u)){toast('URL の形式が違います（…/exec で終わる URL）');return true;}
+if(k.length<8){toast('合言葉は 8 文字以上です');return true;}
+S.sync={u:u,k:k};syDraft={u:null,k:null};save();syTestMsg='';
+syncTest().then(function(){return sync(true);});
+return true;
+}
+if(act==='sytest'){syncTest();return true;}
+if(act==='synow'){sync(true);return true;}
+if(act==='syup'){var n=uploadAll();toast(n+'件を送信待ちにしました');sync(true);return true;}
+if(act==='sycode'){
+if(!cfgOk()){toast('同期が未設定です');return true;}
+var code=S.sync.u+'#'+S.sync.k;
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(function(){toast('設定コードをコピーしました（URL欄に貼り付ければ両方入ります）');},function(){syDraft.u=code;renderParent();toast('URL欄に表示しました。コピーしてください');});}
+else{syDraft.u=code;renderParent();toast('URL欄に表示しました。コピーしてください');}
+return true;
+}
+if(act==='syclear'){S.sync={};syDraft={u:null,k:null};syTestMsg='';save();renderParent();toast('同期設定を消しました（記録は残っています）');return true;}
+return false;
+}
+
+// ---------- ボーナス（任意のTODO・別ポイント） ----------
+var bArm=false;
+function btotal(){var n=0,d,id;for(d in S.bdone){for(id in S.bdone[d]){n+=S.bdone[d][id]||0;}}return Math.max(0,n+(S.badj||0));}
+function sortedBRew(){return PL.bonusRewards.slice().sort(function(a,b){return a.pts-b.pts;});}
+function bonusOn(){return PL.bonusRewards.length>0||PL.bonusDaily.length>0||Object.keys(PL.bonus).length>0||btotal()>0;}
+function bonusList(d){return PL.bonusDaily.concat(PL.bonus[weekDate(d)]||[]);}
+function bIsDone(d,id){var o=S.bdone[weekDate(d)];return !!(o&&o[id]>0);}
+function bonusNameFor(date,id){var L=PL.bonusDaily.concat(PL.bonus[date]||[]);for(var i=0;i<L.length;i++){if(L[i].id===id)return L[i].name;}return '';}
+function bCycle(){var m=0;PL.bonusRewards.forEach(function(r){if(r.pts>m)m=r.pts;});return m;}
+function bAllInst(T){
+var out=[],R=sortedBRew(),c=bCycle();
+if(!R.length||!c)return out;
+var K=PL.bonusRewardsRepeat?Math.floor(Math.max(0,T)/c)+2:1;
+for(var k=1;k<=K;k++){R.forEach(function(r){out.push({key:k===1?r.id:r.id+'#'+k,id:r.id,k:k,pts:r.pts+(k-1)*c,name:r.name,icon:r.icon});});}
+out.sort(function(a,b){return a.pts-b.pts;});
+return out;
+}
+function bRewardName(id){id=String(id).split('#')[0];for(var i=0;i<PL.bonusRewards.length;i++){if(PL.bonusRewards[i].id===id)return PL.bonusRewards[i].name;}return '';}
+function addBAdj(v,note){
+var e={id:newId(),t:Date.now(),dev:devLabel(),k:'badj',d:'',key:'',n:note||'',v:v};
+S.badjE[e.id]=v;S.badj=(S.badj||0)+v;
+S.out.push(e);save();scheduleSync();
+}
+function renderPoints(){
+var t=total(),R=sortedRew(),prev=0,next=null,i;
+for(i=0;i<R.length;i++){if(R[i].pts>t){next=R[i];break;}prev=R[i].pts;}
+var pc=next?Math.round((t-prev)/(next.pts-prev)*100):100;
+var h='<div class="pcard"><div class="ptop"><div class="ptotal"><span class="pst">⭐</span><b>'+t+'</b><small>ポイント</small></div><div class="pnext">'+(next?'あと '+(next.pts-t)+' ポイントで<br><b>'+esc(next.icon)+' '+esc(next.name)+'</b>':(R.length?'ぜんぶの ごほうびを<br>ゲットしたよ！':'ごほうびは おうちの ひとと<br>きめようね'))+'</div></div>';
+h+='<div class="pbar"><i style="width:'+pc+'%"></i></div><div class="stamps">';
+for(i=0;i<7;i++){var d=ORDER[i],ea=!!S.pts.log[weekDate(d)];h+='<span class="stp'+(ea?' on':'')+(d===view?' cur':'')+'">'+(ea?'⭐':DN[d])+'</span>';}
+h+='</div></div>';
+if(bonusOn()){
+var bt=btotal(),BR=sortedBRew(),bAll=bAllInst(bt),bprev=0,bnext=null;
+for(i=0;i<bAll.length;i++){if(bAll[i].pts>bt){bnext=bAll[i];break;}bprev=bAll[i].pts;}
+var bpc=bnext?Math.round((bt-bprev)/(bnext.pts-bprev)*100):100;
+h+='<div class="pcard bcard"><div class="ptop"><div class="ptotal"><span class="pst">🏅</span><b>'+bt+'</b><small>ボーナス</small></div><div class="pnext">'+(bnext?'あと '+(bnext.pts-bt)+' ポイントで<br><b>'+esc(bnext.icon)+' '+esc(bnext.name)+'</b>':(BR.length?'ぜんぶの ごほうびを<br>ゲットしたよ！':'ごほうびは おうちの ひとと<br>きめようね'))+'</div></div><div class="pbar"><i style="width:'+bpc+'%"></i></div><p class="note" style="margin:8px 0 0">ボーナスポイント（ちゃんと やれたら ＋）</p></div>';
+}
+$('pts').innerHTML=h;
+}
+function bcheck(on){return '<circle class="bkc '+(on?'on':'off')+'" cx="24" cy="24" r="19" stroke-width="3"/>'+(on?'<path class="bkp" d="M15 25l6.5 6.5L33 18"/>':'');}
+function renderBonus(){
+var el=$('bonus');
+if(!bonusOn()){el.innerHTML='';return;}
+var L=bonusList(view),h='<div class="bsec"><span class="bchip">ボーナス</span><span>ちゃんと やれたら ＋ポイント！</span></div>';
+if(!L.length){el.innerHTML=h+'<div class="bsum">きょうは ボーナスは ないよ（ある日だけ ここに 出ます）</div>';return;}
+var n=0;
+L.forEach(function(b){
+var dn=bIsDone(view,b.id);if(dn)n++;
+h+='<button class="task bonus'+(dn?' done':'')+'" data-bid="'+esc(b.id)+'" aria-pressed="'+dn+'"><span class="ic">'+esc(b.icon)+'</span><span class="nm">'+esc(b.name)+(b.memo?'<span class="tm" style="color:var(--ink)">'+esc(b.memo)+'</span>':'')+'</span><span class="bpp">＋'+b.pts+'</span><svg class="ck" viewBox="0 0 48 48">'+bcheck(dn)+'</svg></button>';
+});
+el.innerHTML=h+'<div class="bsum">ボーナス '+n+' / '+L.length+' できた</div>';
+}
+function renderBonusRewards(){
+var el=$('brewards'),R=sortedBRew(),t=btotal();
+if(!bonusOn()||!R.length){el.innerHTML='';return;}
+var all=bAllInst(t),show=[],up=0,got=0,i;
+for(i=0;i<all.length;i++){
+var x=all[i];
+if(x.pts<=t){if(S.bclaimed[x.key]){got++;}else{show.push(x);}}
+else if(up<R.length){show.push(x);up++;}
+}
+var h='<div class="bsec"><span class="bchip">ボーナスの ごほうび</span></div>';
+show.forEach(function(r){
+var ok=t>=r.pts;
+var st=ok?'<span class="rs g">ゲット！</span>':'<span class="rs">あと '+(r.pts-t)+'</span>';
+h+='<div class="rw brw'+(ok?' got':'')+'"><span class="ic">'+esc(r.icon)+'</span><span class="nm">'+esc(r.name)+'<span class="tm">'+r.pts+' ポイント'+(r.k>1?'（'+r.k+'しゅうめ）':'')+'</span></span>'+st+'</div>';
+});
+if(got>0)h+='<div class="bsum">これまでに もらった ごほうび：'+got+' こ</div>';
+el.innerHTML=h;
+}
+function toggleBonus(id,x,y){
+if(view!==todayIdx()){toast('その ひに なったら おしてね');return;}
+var d=weekDate(view),L=bonusList(view),b=null,i;
+for(i=0;i<L.length;i++){if(L[i].id===id)b=L[i];}
+if(!b)return;
+if(!S.bdone[d])S.bdone[d]={};
+var before=btotal(),on=!(S.bdone[d][id]>0);
+if(on){S.bdone[d][id]=b.pts;sfx('pop');burst(x,y);}else{delete S.bdone[d][id];sfx('un');}
+emit('bonus',d,id,on?b.pts:0,b.name);
+save();renderAll();
+if(on){
+toast('ボーナス ＋'+b.pts+' ポイント！');
+var after=btotal(),un=bAllInst(after).filter(function(r){return r.pts>before&&r.pts<=after;});
+if(un.length){setTimeout(function(){sfx('fan');confetti();toast('ボーナスの ごほうび「'+un.map(function(r){return r.name;}).join('」「')+'」ゲット！');},600);}
+}
+}
+function bonusParentHtml(){
+var h='<div class="sub" style="margin:14px 0 6px">ボーナスポイント：<b id="bptv">'+btotal()+'</b></div><div class="btns" style="margin:0 0 6px"><button class="btn sec" data-act="bpadj" data-v="-1">− 1</button><button class="btn sec" data-act="bpadj" data-v="1">＋ 1</button><button class="btn sec" data-act="bpreset">'+(bArm?'本当に 0 に戻す？':'0 に戻す')+'</button></div>';
+var bt2=btotal(),earned=bAllInst(bt2).filter(function(x){return x.pts<=bt2;}).slice(-12);
+if(earned.length){h+='<div class="sub">ボーナスの ごほうびを渡したら チェック</div>';earned.forEach(function(r){h+='<label class="chk"><input type="checkbox" data-bclaim="'+esc(r.key)+'"'+(S.bclaimed[r.key]?' checked':'')+'><span>'+esc(r.icon)+' '+esc(r.name)+'（'+r.pts+'ポイント'+(r.k>1?'・'+r.k+'周目':'')+'）</span></label>';});}
+return h;
+}
+function bonusAct(act,b){
+if(act==='bpadj'){var v=parseInt(b.getAttribute('data-v'),10);if(btotal()+v<0)return true;addBAdj(v,'手動補正');var el=$('bptv');if(el)el.textContent=btotal();return true;}
+if(act==='bpreset'){
+if(!bArm){bArm=true;renderParent();setTimeout(function(){if(bArm&&parent){bArm=false;renderParent();}},3500);return true;}
+bArm=false;var c=btotal();if(c>0)addBAdj(-c,'0に戻す');Object.keys(S.bclaimed).forEach(function(k){delete S.bclaimed[k];emit('bclaim','',k,0,bRewardName(k));});renderParent();toast('ボーナスポイントを 0 に戻しました');return true;
+}
+return false;
+}
+$('parent').addEventListener('change',function(e){
+var c=e.target.getAttribute&&e.target.getAttribute('data-bclaim');
+if(c){var on=!!e.target.checked;if(on){S.bclaimed[c]=true;}else{delete S.bclaimed[c];}emit('bclaim','',c,on?1:0,bRewardName(c));}
+});
+$('bonus').addEventListener('click',function(e){var b=e.target.closest('.task.bonus');if(!b)return;toggleBonus(b.getAttribute('data-bid'),e.clientX,e.clientY);});
 var AC=null;
 function ac(){if(S.mute)return null;try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();}if(AC.state==='suspended')AC.resume();return AC;}catch(e){return null;}}
 function tone(f,t0,dur,type,vol){var a=ac();if(!a)return;try{var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.15,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+dur+0.05);}catch(e){}}
@@ -619,14 +957,14 @@ function jump(){var c=$('chr');if(!c)return;c.classList.remove('jump');void c.ge
 function toggle(id,x,y){
 if(view!==todayIdx()){toast('その ひに なったら おしてね');return;}
 var set=doneSet(view),i=set.indexOf(id),info=null;
-if(i>=0){set.splice(i,1);sfx('un');}
+if(i>=0){set.splice(i,1);sfx('un');emit('done',weekDate(view),id,0,nameFor(weekDate(view),id));}
 else{
-set.push(id);sfx('pop');burst(x,y);
+set.push(id);sfx('pop');burst(x,y);emit('done',weekDate(view),id,1,nameFor(weekDate(view),id));
 var st0=stats();
 if(st0.P.length&&st0.n===st0.P.length){
 info={gained:false,total:total(),unlocked:[]};
 var dk=weekDate(view);
-if(!S.pts.log[dk]){var bf=total();S.pts.log[dk]=1;var af=total();info={gained:true,total:af,unlocked:PL.rewards.filter(function(r){return r.pts>bf&&r.pts<=af;})};}
+if(!S.pts.log[dk]){var bf=total();S.pts.log[dk]=1;emit('award',dk,'',1,'');var af=total();info={gained:true,total:af,unlocked:PL.rewards.filter(function(r){return r.pts>bf&&r.pts<=af;})};}
 }
 }
 save();renderAll();
@@ -650,12 +988,15 @@ var td=todayIdx();if(td!==lastDay){lastDay=td;view=td;parent=false;renderAll();}
 var m=Math.floor(nowMin());
 if(m!==lastMin){lastMin=m;if(!parent){renderRing();renderStatus();renderList();}renderHeader();}
 if(Date.now()-lastFetch>600000){lastFetch=Date.now();refresh(false);}
+if(cfgOk()&&document.visibilityState==='visible'&&Date.now()-lastSyncTry>120000){sync(false);}
 },15000);
-document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){lastFetch=Date.now();refresh(false);}});
+window.addEventListener('online',function(){sync(false);});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){lastFetch=Date.now();refresh(false);sync(false);}});
 if(window.matchMedia){var mq=window.matchMedia('(prefers-color-scheme: dark)');var onMq=function(){renderAll();};if(mq.addEventListener){mq.addEventListener('change',onMq);}else if(mq.addListener){mq.addListener(onMq);}}
 renderAll();
 lastMin=Math.floor(nowMin());
 refresh(false);
+sync(false);
 })();
 </script>
 </body>

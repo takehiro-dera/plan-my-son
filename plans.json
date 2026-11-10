@@ -1,103 +1,85 @@
 {
-  "version": 1,
+  "version": 2,
   "updatedAt": "2026-11-08",
-  "note": "仮のサンプルです。習い事とごほうびは、あとで本物に置き換えます。",
   "weekly": {
     "0": {
       "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "breakfast", "name": "あさごはん", "icon": "🍞", "start": "07:00", "end": "08:00"},
-        {"id": "free1", "name": "じゆうじかん", "icon": "🎈", "start": "08:00", "end": "09:00"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "09:00", "end": "10:00"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "10:00", "end": "10:45"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "10:45", "end": "12:00"},
-        {"id": "lunch", "name": "ひるごはん", "icon": "🍝", "start": "12:00", "end": "13:00"},
-        {"id": "outing", "name": "おでかけ・じゆう", "icon": "🚲", "start": "13:00", "end": "17:00"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "18:00", "end": "19:00"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "19:00", "end": "19:45"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "soccer", "name": "サッカー", "icon": "⚽", "start": "08:30", "end": "12:30"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "12:30", "end": "20:30"}
       ]
     },
     "1": {
-      "range": ["15:00", "21:00"],
+      "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "snack", "name": "おやつ", "icon": "🍪", "start": "15:00", "end": "15:30"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "15:30", "end": "16:15"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "16:15", "end": "16:45"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "16:45", "end": "17:30"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "17:30", "end": "18:15"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "18:15", "end": "20:00"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "study", "name": "こくご２枚・さんすう２枚・えいご", "icon": "✏️", "start": "07:40", "end": "08:20"},
+        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "18:00", "end": "18:45"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "18:45", "end": "20:30"}
       ]
     },
     "2": {
-      "range": ["15:00", "21:00"],
+      "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "snack", "name": "おやつ", "icon": "🍪", "start": "15:00", "end": "15:30"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "15:30", "end": "16:15"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "16:15", "end": "16:45"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "16:45", "end": "17:30"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "17:30", "end": "18:15"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "18:15", "end": "20:00"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "study", "name": "こくご２枚・さんすう２枚・えいご", "icon": "✏️", "start": "07:40", "end": "08:20"},
+        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "18:00", "end": "18:45"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "18:45", "end": "20:30"}
       ]
     },
     "3": {
-      "range": ["15:00", "21:00"],
+      "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "snack", "name": "おやつ", "icon": "🍪", "start": "15:00", "end": "15:30"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "15:30", "end": "16:15"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "16:15", "end": "16:45"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "16:45", "end": "17:30"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "17:30", "end": "18:15"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "18:15", "end": "20:00"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "study", "name": "こくご２枚・さんすう２枚・えいご", "icon": "✏️", "start": "07:40", "end": "08:20"},
+        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "18:15", "end": "18:30"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "18:30", "end": "20:30"}
       ]
     },
     "4": {
-      "range": ["15:00", "21:00"],
+      "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "snack", "name": "おやつ", "icon": "🍪", "start": "15:00", "end": "15:30"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "15:30", "end": "16:15"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "16:15", "end": "16:45"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "16:45", "end": "17:30"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "17:30", "end": "18:15"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "18:15", "end": "20:00"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "study", "name": "こくご２枚・さんすう２枚・えいご", "icon": "✏️", "start": "07:40", "end": "08:20"},
+        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "18:15", "end": "18:30"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "18:30", "end": "20:30"}
       ]
     },
     "5": {
-      "range": ["15:00", "21:00"],
+      "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "snack", "name": "おやつ", "icon": "🍪", "start": "15:00", "end": "15:30"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "15:30", "end": "16:15"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "16:15", "end": "16:45"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "16:45", "end": "17:30"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "17:30", "end": "18:15"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "18:15", "end": "20:00"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "study", "name": "こくご２枚・さんすう２枚・えいご", "icon": "✏️", "start": "07:40", "end": "08:20"},
+        {"id": "soccer", "name": "サッカー", "icon": "⚽", "start": "16:00", "end": "17:00"},
+        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "18:00", "end": "18:45"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "18:45", "end": "20:30"}
       ]
     },
     "6": {
       "range": ["07:00", "21:00"],
       "tasks": [
-        {"id": "breakfast", "name": "あさごはん", "icon": "🍞", "start": "07:00", "end": "08:00"},
-        {"id": "free1", "name": "じゆうじかん", "icon": "🎈", "start": "08:00", "end": "09:00"},
-        {"id": "homework", "name": "しゅくだい", "icon": "📝", "start": "09:00", "end": "10:00"},
-        {"id": "study", "name": "じしゅう", "icon": "📚", "start": "10:00", "end": "10:45"},
-        {"id": "play", "name": "あそぶ", "icon": "🎮", "start": "10:45", "end": "12:00"},
-        {"id": "lunch", "name": "ひるごはん", "icon": "🍝", "start": "12:00", "end": "13:00"},
-        {"id": "outing", "name": "おでかけ・じゆう", "icon": "🚲", "start": "13:00", "end": "17:00"},
-        {"id": "dinner", "name": "ゆうごはん", "icon": "🍚", "start": "18:00", "end": "19:00"},
-        {"id": "bath", "name": "おふろ", "icon": "🛁", "start": "19:00", "end": "19:45"},
-        {"id": "bed", "name": "ねるじゅんび", "icon": "🌙", "start": "20:00", "end": "21:00"}
+        {"id": "breakfast", "name": "朝ごはん", "icon": "🍞", "start": "07:00", "end": "07:40"},
+        {"id": "soccer", "name": "サッカー", "icon": "⚽", "start": "08:30", "end": "12:30"},
+        {"id": "bed", "name": "どくしょ・ねる", "icon": "📖", "start": "12:30", "end": "20:30"}
       ]
     }
   },
   "overrides": {},
+  "bonusDaily": [
+    {"id": "b-extra", "name": "ついかのべんきょう", "icon": "📚", "pts": 1},
+    {"id": "b-help", "name": "おてつだいできた", "icon": "🧹", "pts": 1},
+    {"id": "b-meal", "name": "ごはんをきちんとただしくたべれた", "icon": "🍚", "pts": 1},
+    {"id": "b-nofight", "name": "けんかしなかった", "icon": "🤝", "pts": 1}
+  ],
+  "bonus": {},
   "rewards": [
-    {"id": "r1", "pts": 5, "name": "すきな おやつ", "icon": "🍦"},
-    {"id": "r2", "pts": 10, "name": "おでかけ", "icon": "🎡"},
-    {"id": "r3", "pts": 20, "name": "ほしい おもちゃ", "icon": "🤖"}
-  ]
+    {"id": "r1", "pts": 7, "name": "すきなおやつ", "icon": "🍦"},
+    {"id": "r2", "pts": 21, "name": "500円未満のおもちゃ", "icon": "🤖"}
+  ],
+  "bonusRewards": [
+    {"id": "br1", "pts": 10, "name": "10えん", "icon": "💴"},
+    {"id": "br2", "pts": 30, "name": "50えん", "icon": "💴"}
+  ],
+  "bonusRewardsRepeat": false
 }
